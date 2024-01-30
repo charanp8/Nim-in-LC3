@@ -1,2 +1,284 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+.ORIG x3000
+BRnzp Start
+
+Player1Turn .stringz "Player 1, choose a row and number of rocks: "
+Player2Turn .stringz "Player 2, choose a row and number of rocks: "
+
+Start
+LEA R0, ROWA
+PUTS
+
+LD R0, NEWLINE
+PUTC
+
+LEA R0, ROWB
+PUTS
+
+LD R0, NEWLINE
+PUTC
+
+LEA R0, ROWC
+PUTS
+
+;LD R0, NEWLINE
+;PUTC
+
+;Save the user input
+LEA r1, storeString
+
+TryAgain 
+    
+    LD R5, SAVER5
+    ADD R5, R5, #1       ; Clear R6
+    AND R5, R5, #1       ; Set R6 to 1
+    ST R5, SAVER5
+    BRp Player1Loop      ; If positive, go to Player1Loop
+    BRz Player2Loop ; If zero, go to Player2Loop
+
+Balls
+    ADD R5, R5, #0
+    BRp Player1Loop
+    BRz Player2Loop
+
+Player2Loop
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, Player2Turn  ; Load effective address of Player2Turn
+    PUTS                  ; Print the string
+    BRnzp Input          ; Branch to Input
+
+
+Player1Loop
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, Player1Turn  ; Load effective address of Player1Turn
+    PUTS                  ; Print the string
+    BRnzp Input          ; Branch to Input
+    
+Input    
+    LD r1 INPUTROW
+; this is for the input
+    LOOP
+        getc
+
+        out
+        str r0, r1, 0
+        add r1, r1, 1
+        add r0, r0, -10
+    
+        getc
+
+        out
+        str r0, r1, 0
+        add r1, r1, 1
+        add r0, r0, -10
+
+        brnzp OUTSIDE
+
+    ;brnzp LOOP
+
+    OUTSIDE
+    
+ST R1, SAVER11
+
+LD R0, InitialRowA
+LD R1, InitialRowB
+LD R2, InitialRowC
+
+; Move user input into registers to start modifying
+
+LDI R3, INPUTNUMBER ; Load the address of x3079 into R4
+;ADD R6, R5, R3
+;ADD R3, R3, #3
+;LDI, R3, INPUTNUMBER
+;ST R3, INPUTNUMBER
+LD R5, ASCII9
+ADD R6, R5, R3
+BRp Invalid
+LD R5, ASCII0
+ADD R6, R5, R3
+BRn Invalid
+
+
+LDI R4, INPUTROW   ; Load the value from memory location x3079 into R3 ; Load the address of x3000 into R2
+;ADD R4, R4, #3
+;LDI R4, INPUTROW
+;ST R4, INPUTROW
+LD R5, ASCIIC
+ADD R5, R5, R4
+BRp Invalid
+LD R5, ASCIIA
+ADD R5, R5, R4
+BRn Invalid
+
+LD R5, ASCIIB ; might not work
+NOT R5, R5
+ADD R5, R5, #1
+ADD R5, R5, R4
+
+
+BRn RowALoop
+BRz RowBLoop
+BRp RowCLoop
+
+;MainLoop beings here
+RowALoop
+    NOT R6, R6
+    ADD R6, R6 #0
+    ADD R0, R6, R0
+    BRn Invalid
+    ST R0 InitialRowA
+    BRzp UpdateGameBoard
+    
+
+RowBLoop
+    NOT R6, R6
+    ADD R6, R6 #0
+    ADD R1, R6, R1
+    BRn Invalid
+    ST R1 InitialRowB
+    BRzp UpdateGameBoard
+    
+
+RowCLoop
+    NOT R6, R6
+    ADD R6, R6 #0
+    ADD R2, R6, R2
+    BRn Invalid
+    ST R2 InitialRowC
+    BRzp UpdateGameBoard
+    
+    
+UpdateGameBoard
+    LEA R7, ROWA
+    ADD R7, R7, #7
+    ADD R7, R7, R0
+    LD R4, Blank
+    STR R4, R7, #0
+    ST R4, SaveR0
+    ST R0, SaveR02
+    LD R0, NEWLINE
+    PUTC
+
+    LEA R7, ROWB
+    ADD R7, R7, #7
+    ADD R7, R7, R1
+    LD R4, Blank
+    STR R4, R7, #0
+    ST R4, SaveR1
+    LD R0, NEWLINE
+    PUTC
+    
+    LEA R7, ROWC
+    ADD R7, R7, #7
+    ADD R7, R7, R2
+    LD R4, Blank
+    STR R4, R7, #0
+    ST R4, SaveR4
+    ST R2, SAVER2
+    ;LD R0, NEWLINE
+    ;PUTC
+    
+    LD R0, SAVER0
+    LD R0, SaveR02
+    ADD R0, R0, #0
+    ST R0, SAVER0
+    BRnp CONT
+    ADD R1, R1, #0
+    BRnp CONT
+    LD R2, SaveR2
+    ADD R2, R2, #0
+    BRz Winner
+   
+CONT   
+    LEA R0, ROWA
+    PUTS
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, ROWB
+    PUTS
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, ROWC
+    PUTS
+    LD R0, SAVER0
+    LD R1, SAVER11
+    
+    ; create the WINNER string
+    ;ADD R0, R0, #0
+    ;BRnp TryAgain
+    ;ADD R1, R1, #0
+    ;BRnp TryAgain
+    ;ADD R2, R2, #0
+    ;BRnp TryAgain
+    ;BRz Winner
+    
+    BR TryAgain
+    
+    
+    
+Invalid
+    LD R5, SAVER5
+    ST R0, SAVER0
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, INVALIDINPUT
+    PUTS
+    LD R0, SAVER0
+    BR Balls
+    
+Winner
+    LD R5 SAVER5
+    LD R0, NEWLINE
+    PUTC
+    ADD R5, R5, #0
+    BRp Player1WinnerString      ; If positive, go to Player1Loop
+    BRz Player2WinnerString
+
+Player2WinnerString
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, Player2String  ; Load effective address of Player2Turn
+    PUTS                  ; Print the string
+    
+    HALT
+
+Player1WinnerString
+    LD R0, NEWLINE
+    PUTC
+    LEA R0, Player1String  ; Load effective address of Player1Turn
+    PUTS                  ; Print the string
+    
+    HALT
+    
+Blank .fill x0000
+SaveR0 .fill x01
+SaveR1 .fill x02
+SaveR2 .fill x05
+SaveR4 .fill x03
+SaveR11 .BLKW 1
+SaveR5 .fill x04
+SaveR02 .fill x06
+storeString .blkw 5
+NEWLINE .fill x0A
+;ASCII .fill  x30    ; Our ASCII offset
+INPUTROW .fill x30FF
+INPUTNUMBER .fill x3100
+ASCII0 .fill x-31 ; 
+ASCII9 .fill x-39
+ASCIIA .fill x-41
+ASCIIC .fill x-43
+ASCIIB .fill x42
+InitialRowA .fill x3
+InitialRowB .fill x5
+InitialRowC .fill x8
+INVALIDINPUT .stringz "Invalid Move. Try Again"
+ROWA .stringz "ROW A: ooo"
+ROWB .stringz "ROW B: ooooo"
+ROWC .stringz "ROW C: oooooooo"
+
+Player1String .stringz "Player 2 Wins."
+Player2String .stringz "Player 1 Wins."
+;WINNERSTRING .stringz "Player 1 Wins."
+
+.END
